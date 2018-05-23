@@ -1,8 +1,12 @@
-package c45.ingconocimiento;
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package com.mycompany.c45.maven;
 
-import c45.ingconocimiento.modelos.Columna;
-import java.awt.List;
 import java.util.ArrayList;
+import modelos.Columna;
 
 /**
  *

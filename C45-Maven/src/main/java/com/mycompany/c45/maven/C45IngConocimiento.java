@@ -3,7 +3,8 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package c45.ingconocimiento;
+package com.mycompany.c45.maven;
+
 import java.awt.*;
 import javax.swing.*;
 import no.geosoft.cc.geometry.Geometry;

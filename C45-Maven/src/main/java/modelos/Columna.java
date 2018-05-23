@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package c45.ingconocimiento.modelos;
+package modelos;
 
 import java.awt.List;
 import java.util.ArrayList;
