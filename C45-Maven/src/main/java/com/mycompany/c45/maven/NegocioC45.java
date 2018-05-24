@@ -14,6 +14,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Collectors;
 import modelos.Columna;
+import modelos.Nodo;
+import modelos.SumaTiposPorColumna;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.formula.functions.Column;
 import org.apache.poi.ss.usermodel.Cell;
@@ -35,6 +37,7 @@ public class NegocioC45 {
     private double entropiaGlobal;
     private int totalColumnas;
     private int totalRegistros;
+    private ArrayList<Nodo> arbolFinal = new ArrayList<>();
 
     public static void main(String[] args) throws IOException, InvalidFormatException {
         NegocioC45 context = new NegocioC45();
@@ -96,65 +99,7 @@ public class NegocioC45 {
             }
 
             //Llamar al siguiente paso
-            paso1();
-
-            /*columna = new Columna();
-        columna.setNombre("Outlook");
-        columna.setNumDeTipos(3);
-        datosColumnas.addAll(generarListaElementos(5, "sunny"));
-        datosColumnas.addAll(generarListaElementos(4, "overcast"));
-        datosColumnas.addAll(generarListaElementos(5, "rainy"));
-        columna.setElemtos(datosColumnas);
-        tablaPrincipal.add(columna);
-        datosColumnas = null;
-        columna = null;
-
-        datosColumnas = new ArrayList<>();
-        columna = new Columna();
-        columna.setNombre("Temperature");
-        columna.setNumDeTipos(3);
-        datosColumnas.addAll(generarListaElementos(4, "hot"));
-        datosColumnas.addAll(generarListaElementos(6, "mild"));
-        datosColumnas.addAll(generarListaElementos(4, "cold"));
-        columna.setElemtos(datosColumnas);
-        tablaPrincipal.add(columna);
-        datosColumnas = null;
-        columna = null;
-
-        datosColumnas = new ArrayList<>();
-        columna = new Columna();
-        columna.setNombre("Humidity");
-        columna.setNumDeTipos(2);
-        datosColumnas.addAll(generarListaElementos(7, "high"));
-        datosColumnas.addAll(generarListaElementos(7, "normal"));
-        columna.setElemtos(datosColumnas);
-        tablaPrincipal.add(columna);
-        datosColumnas = null;
-        columna = null;
-
-        datosColumnas = new ArrayList<>();
-        columna = new Columna();
-        columna.setNombre("Windy");
-        columna.setNumDeTipos(2);
-        datosColumnas.addAll(generarListaElementos(6, "true"));
-        datosColumnas.addAll(generarListaElementos(8, "flase"));
-        columna.setElemtos(datosColumnas);
-        tablaPrincipal.add(columna);
-        datosColumnas = null;
-        columna = null;
-
-        datosColumnas = new ArrayList<>();
-        columna = new Columna();
-        columna.setNombre("Play");
-        columna.setNumDeTipos(2);
-        datosColumnas.addAll(generarListaElementos(9, "yes"));
-        datosColumnas.addAll(generarListaElementos(5, "no"));
-        columna.setElemtos(datosColumnas);
-        columnaPrincipal.add(columna);
-        datosColumnas = null;
-        columna = null;*/
-            //entropiaGlobal = -((double) 9 / 14) * Math.log((double) 9 / 14) / Math.log(2) - ((double) 5 / 14) * Math.log((double) 5 / 14) / Math.log(2);
-            //String x = "";
+            calcularEntropiaGlobar();
         } catch (Exception ex) {
             String error = "Error" + ex.getStackTrace();
         }
@@ -163,7 +108,7 @@ public class NegocioC45 {
     /**
      * Metodo que calcula la entropia globar inicial del paso 1.
      */
-    public void paso1() {
+    public void calcularEntropiaGlobar() {
         //Obtener el total de los "Si" y los "No"
         ArrayList<String> columnaDeCualesJuegan = tablaPrincipal.get(totalColumnas - 1).getElemtos();
         int totalSi = Collections.frequency(columnaDeCualesJuegan, "Yes");
@@ -171,27 +116,87 @@ public class NegocioC45 {
         //Calcular la entropia globar:
         entropiaGlobal = -((double) totalSi / totalRegistros) * Math.log((double) totalSi / totalRegistros) / Math.log(2) - ((double) totalNo / totalRegistros) * Math.log((double) totalNo / totalRegistros) / Math.log(2);
         String x = "";
+        paso1();
     }
 
-    public void paso2() {
+    public void paso1() {
+        int totalSi = 0;
+        int totalNo = 0;
+        int totalDeUnElementoDeUnaColumna = 0;
+        ArrayList<Double> resultadosPorTipoEnColumna = new ArrayList<>();
+        ArrayList<SumaTiposPorColumna> resultadosSumaPorcentajesPorColumna = new ArrayList<>();
+        double sumaResultadosTipos = 0;
+        String nombreColumnaGanadora;
+        Nodo nodoPrincipal;
         //Se recorrerán toas las columnas y se le resta 2 porque 1 es por el indice del arreglo
         //y el otro porque la ultima columna es la que indican si juegan o no.
-        for (int i = 0; i < totalColumnas - 2; i++) {
+        for (int i = 0; i < totalColumnas - 1; i++) {
             //Filtrar los elementos de cada columna y hacer un Distinct para contarlos
             List<String> listDistinct = tablaPrincipal.get(i).getElemtos().stream().distinct().collect(Collectors.toList());
             tablaPrincipal.get(i).setNumDeTipos(listDistinct.size());
-            for(int j = 0; j < tablaPrincipal.get(i).getElemtos().size(); j++){
-                
+            //Recorrer cada elemento diferente en la columan para buscar sus "Si" y "No"
+            for (int k = 0; k < listDistinct.size(); k++) {
+                nodoPrincipal = new Nodo();
+                for (int j = 0; j < tablaPrincipal.get(i).getElemtos().size(); j++) {
+                    /*Si el elemnto actual recorriendo de la columna es == al 
+                    primero de la lista con el Distinct: validar sus total Si y no */
+                    String elemento = listDistinct.get(k);
+                    if (tablaPrincipal.get(i).getElemtos().get(j).equals(listDistinct.get(k))) {
+                        if (tablaPrincipal.get(totalColumnas - 1).getElemtos().get(j).equals("Yes")) {
+                            totalSi++;
+                        } else {
+                            totalNo++;
+                        }
+                    }
+                }
+                //If para agregar si un tipo en la columna son puros "Si" o "No"
+                //para agregarlos directo
+                if(totalSi == 0){
+                    Nodo nodoAgregar = new Nodo();
+                    nodoAgregar.setNombre("No");
+                    ArrayList<Nodo> arregloNodos = new ArrayList<>();
+                    arregloNodos.add(nodoAgregar);
+                    nodoPrincipal.setOpcionesNodos(arregloNodos);
+                }else if(totalNo == 0){
+                    Nodo nodoAgregar = new Nodo();
+                    nodoAgregar.setNombre("Yes");
+                    ArrayList<Nodo> arregloNodos = new ArrayList<>();
+                    arregloNodos.add(nodoAgregar);
+                    nodoPrincipal.setOpcionesNodos(arregloNodos);
+                }
+                totalDeUnElementoDeUnaColumna = totalSi + totalNo;
+                /*Calcular el resultado de ese registro para luego sumarlos y sacar
+                    el total de la columna*/
+                double subPorcentaje = -((double) totalSi / totalDeUnElementoDeUnaColumna) * Math.log((double) totalSi / totalDeUnElementoDeUnaColumna) / Math.log(2) - ((double) totalNo / totalDeUnElementoDeUnaColumna) * Math.log((double) totalNo / totalDeUnElementoDeUnaColumna) / Math.log(2);
+                double totalTipoEntreTotalRegistros = (double) totalDeUnElementoDeUnaColumna / (double) totalRegistros;
+                double porcentaje = subPorcentaje * totalTipoEntreTotalRegistros;
+                resultadosPorTipoEnColumna.add(porcentaje);
+                totalSi = 0;
+                totalNo = 0;
             }
+            //Sumar todos los porcentajes de los tipos diferentes de la columna
+            for (double obj : resultadosPorTipoEnColumna) {
+                if(Double.isNaN(obj)){
+                    obj = 0;
+                }
+                sumaResultadosTipos += obj;
+            }  
+            //AGREGAR A LA LISTA DE DE LAS COLUMNAS SUS SUMAS PARA OBTENER LA GANADORA.
+            resultadosPorTipoEnColumna = new ArrayList<>();
+            SumaTiposPorColumna totalSuma = new SumaTiposPorColumna();
+            totalSuma.setNombreColumna(tablaPrincipal.get(i).getNombre());
+            totalSuma.setTotalSumaTipos(sumaResultadosTipos);
+            resultadosSumaPorcentajesPorColumna.add(totalSuma);
+            sumaResultadosTipos = 0;
         }
+        SumaTiposPorColumna ganador = Collections.min(resultadosSumaPorcentajesPorColumna);
+        nodoPrincipal = new Nodo();
+        nodoPrincipal.setNombre(ganador.getNombreColumna());
+        String x = "";
     }
-
-    public ArrayList<String> generarListaElementos(int cantidad, String elemento) {
-        ArrayList<String> arrayList = new ArrayList<>();
-        for (int i = 0; i < cantidad; i++) {
-            arrayList.add(elemento);
-        }
-        return arrayList;
+    
+    public void paso2(){
+        
     }
-
+    
 }
