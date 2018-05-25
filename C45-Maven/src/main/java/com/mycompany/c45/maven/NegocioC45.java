@@ -9,6 +9,7 @@ import static com.mycompany.c45.maven.ExcelReader.SAMPLE_XLSX_FILE_PATH;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -38,6 +39,8 @@ public class NegocioC45 {
     private int totalColumnas;
     private int totalRegistros;
     private ArrayList<Nodo> arbolFinal = new ArrayList<>();
+    private Nodo raiz = new Nodo();
+    private Nodo nodoActual = new Nodo();
 
     public static void main(String[] args) throws IOException, InvalidFormatException {
         NegocioC45 context = new NegocioC45();
@@ -127,20 +130,19 @@ public class NegocioC45 {
         ArrayList<SumaTiposPorColumna> resultadosSumaPorcentajesPorColumna = new ArrayList<>();
         double sumaResultadosTipos = 0;
         String nombreColumnaGanadora;
-        Nodo nodoPrincipal;
-        //Se recorrerán toas las columnas y se le resta 2 porque 1 es por el indice del arreglo
-        //y el otro porque la ultima columna es la que indican si juegan o no.
+        Nodo nodoPrincipal = new Nodo();
+        String elemento = "";
+        //Se recorrerán toas las columnas y se le resta 1 porque 1 es por el indice del arreglo.
         for (int i = 0; i < totalColumnas - 1; i++) {
             //Filtrar los elementos de cada columna y hacer un Distinct para contarlos
             List<String> listDistinct = tablaPrincipal.get(i).getElemtos().stream().distinct().collect(Collectors.toList());
             tablaPrincipal.get(i).setNumDeTipos(listDistinct.size());
             //Recorrer cada elemento diferente en la columan para buscar sus "Si" y "No"
             for (int k = 0; k < listDistinct.size(); k++) {
-                nodoPrincipal = new Nodo();
                 for (int j = 0; j < tablaPrincipal.get(i).getElemtos().size(); j++) {
                     /*Si el elemnto actual recorriendo de la columna es == al 
                     primero de la lista con el Distinct: validar sus total Si y no */
-                    String elemento = listDistinct.get(k);
+                    elemento = listDistinct.get(k);
                     if (tablaPrincipal.get(i).getElemtos().get(j).equals(listDistinct.get(k))) {
                         if (tablaPrincipal.get(totalColumnas - 1).getElemtos().get(j).equals("Yes")) {
                             totalSi++;
@@ -151,18 +153,26 @@ public class NegocioC45 {
                 }
                 //If para agregar si un tipo en la columna son puros "Si" o "No"
                 //para agregarlos directo
-                if(totalSi == 0){
+                if (totalSi == 0) {
                     Nodo nodoAgregar = new Nodo();
                     nodoAgregar.setNombre("No");
                     ArrayList<Nodo> arregloNodos = new ArrayList<>();
                     arregloNodos.add(nodoAgregar);
                     nodoPrincipal.setOpcionesNodos(arregloNodos);
-                }else if(totalNo == 0){
+                    //Agregar el resultado si sale directo
+                    ArrayList<String> arregloDeResultadosDirectos = new ArrayList<>();
+                    arregloDeResultadosDirectos.add(elemento);
+                    nodoPrincipal.setResultados(arregloDeResultadosDirectos);
+                } else if (totalNo == 0) {
                     Nodo nodoAgregar = new Nodo();
                     nodoAgregar.setNombre("Yes");
                     ArrayList<Nodo> arregloNodos = new ArrayList<>();
                     arregloNodos.add(nodoAgregar);
                     nodoPrincipal.setOpcionesNodos(arregloNodos);
+                    //Agregar el resultado si sale directo
+                    ArrayList<String> arregloDeResultadosDirectos = new ArrayList<>();
+                    arregloDeResultadosDirectos.add(elemento);
+                    nodoPrincipal.setResultados(arregloDeResultadosDirectos);
                 }
                 totalDeUnElementoDeUnaColumna = totalSi + totalNo;
                 /*Calcular el resultado de ese registro para luego sumarlos y sacar
@@ -176,11 +186,11 @@ public class NegocioC45 {
             }
             //Sumar todos los porcentajes de los tipos diferentes de la columna
             for (double obj : resultadosPorTipoEnColumna) {
-                if(Double.isNaN(obj)){
+                if (Double.isNaN(obj)) {
                     obj = 0;
                 }
                 sumaResultadosTipos += obj;
-            }  
+            }
             //AGREGAR A LA LISTA DE DE LAS COLUMNAS SUS SUMAS PARA OBTENER LA GANADORA.
             resultadosPorTipoEnColumna = new ArrayList<>();
             SumaTiposPorColumna totalSuma = new SumaTiposPorColumna();
@@ -190,13 +200,141 @@ public class NegocioC45 {
             sumaResultadosTipos = 0;
         }
         SumaTiposPorColumna ganador = Collections.min(resultadosSumaPorcentajesPorColumna);
-        nodoPrincipal = new Nodo();
         nodoPrincipal.setNombre(ganador.getNombreColumna());
+        arbolFinal.add(nodoPrincipal);
+        raiz = nodoPrincipal;
+        nodoActual = nodoPrincipal;
         String x = "";
+        paso2();
     }
-    
-    public void paso2(){
-        
+
+    public void paso2() {
+
+        //Recorrer las columnas para obtener la columna del nombre ganador
+        int totalSi = 0;
+        int totalNo = 0;
+        int totalDeUnElementoDeUnaColumna = 0;
+        ArrayList<Double> resultadosPorTipoEnColumna = new ArrayList<>();
+        ArrayList<SumaTiposPorColumna> resultadosSumaPorcentajesPorColumna = new ArrayList<>();
+        double sumaResultadosTipos = 0;
+        Nodo nodoPrincipal = new Nodo();
+        String elemento = "";
+        int numeroDeElementosEnColumna = 0;
+        boolean esColumnaGanadora = false;
+        String elementoPasoActual = "";
+        //Se recorrerán toas las columnas y se le resta 1 porque 1 es por el indice del arreglo.
+        for (int i = 0; i < totalColumnas - 1; i++) {
+            //Si la columna actual es igual a la ganadora general, saltar a la siguiente columna.
+            if (tablaPrincipal.get(i).getNombre().equals(raiz.getNombre())) {
+                esColumnaGanadora = true;
+            }
+            //Filtrar los elementos de cada columna y hacer un Distinct para contarlos
+            List<String> listDistinct = tablaPrincipal.get(i).getElemtos().stream().distinct().collect(Collectors.toList());
+            //Recorrer cada elemento diferente en la columan para buscar sus "Si" y "No"
+            for (int k = 0; k < listDistinct.size(); k++) {
+                for (int j = 0; j < tablaPrincipal.get(i).getElemtos().size(); j++) {
+                    elemento = listDistinct.get(k);
+                    //Si el elemento actual de la columna ya esta en el arbol: Saltar al siguiente.
+                    if (raiz.getResultados().contains(elemento) && esColumnaGanadora) {
+                        continue;
+                    } else if(esColumnaGanadora && !elementoPasoActual.equals("")) {
+                        elementoPasoActual = elemento;
+                        numeroDeElementosEnColumna = Collections.frequency(tablaPrincipal.get(i).getElemtos(), elemento);
+                    }
+
+                    /*Si el elemnto actual recorriendo de la columna es == al 
+                    primero de la lista con el Distinct: validar sus total Si y no */
+                    if (tablaPrincipal.get(i).getElemtos().get(j).equals(listDistinct.get(k))) {
+                        if (tablaPrincipal.get(totalColumnas - 1).getElemtos().get(j).equals("Yes")) {
+                            totalSi++;
+                        } else {
+                            totalNo++;
+                        }
+                    }
+                }
+                //If para agregar si un tipo en la columna son puros "Si" o "No"
+                //para agregarlos directo
+                if (totalSi == 0) {
+                    Nodo nodoAgregar = new Nodo();
+                    nodoAgregar.setNombre("No");
+                    ArrayList<Nodo> arregloNodos = new ArrayList<>();
+                    arregloNodos.add(nodoAgregar);
+                    nodoPrincipal.setOpcionesNodos(arregloNodos);
+                    //Agregar el resultado si sale directo
+                    ArrayList<String> arregloDeResultadosDirectos = new ArrayList<>();
+                    arregloDeResultadosDirectos.add(elemento);
+                    nodoPrincipal.setResultados(arregloDeResultadosDirectos);
+                } else if (totalNo == 0) {
+                    Nodo nodoAgregar = new Nodo();
+                    nodoAgregar.setNombre("Yes");
+                    ArrayList<Nodo> arregloNodos = new ArrayList<>();
+                    arregloNodos.add(nodoAgregar);
+                    nodoPrincipal.setOpcionesNodos(arregloNodos);
+                    //Agregar el resultado si sale directo
+                    ArrayList<String> arregloDeResultadosDirectos = new ArrayList<>();
+                    arregloDeResultadosDirectos.add(elemento);
+                    nodoPrincipal.setResultados(arregloDeResultadosDirectos);
+                }
+                totalDeUnElementoDeUnaColumna = totalSi + totalNo;
+                /*Calcular el resultado de ese registro para luego sumarlos y sacar
+                    el total de la columna*/
+                double subPorcentaje = -((double) totalSi / totalDeUnElementoDeUnaColumna) * Math.log((double) totalSi / totalDeUnElementoDeUnaColumna) / Math.log(2) - ((double) totalNo / totalDeUnElementoDeUnaColumna) * Math.log((double) totalNo / totalDeUnElementoDeUnaColumna) / Math.log(2);
+                double totalTipoEntreTotalRegistros = (double) totalDeUnElementoDeUnaColumna / (double) numeroDeElementosEnColumna;
+                double porcentaje = subPorcentaje * totalTipoEntreTotalRegistros;
+                resultadosPorTipoEnColumna.add(porcentaje);
+                totalSi = 0;
+                totalNo = 0;
+            }
+            //Sumar todos los porcentajes de los tipos diferentes de la columna
+            for (double obj : resultadosPorTipoEnColumna) {
+                if (Double.isNaN(obj)) {
+                    obj = 0;
+                }
+                sumaResultadosTipos += obj;
+            }
+
+            //Si es la columna ganadora, no agregar los resultados de esa columna.
+            if (!esColumnaGanadora) {
+                //AGREGAR A LA LISTA DE DE LAS COLUMNAS SUS SUMAS PARA OBTENER LA GANADORA.
+                resultadosPorTipoEnColumna = new ArrayList<>();
+                SumaTiposPorColumna totalSuma = new SumaTiposPorColumna();
+                totalSuma.setNombreColumna(tablaPrincipal.get(i).getNombre());
+                totalSuma.setTotalSumaTipos(sumaResultadosTipos);
+                resultadosSumaPorcentajesPorColumna.add(totalSuma);
+                sumaResultadosTipos = 0;
+            }
+        }
+        SumaTiposPorColumna ganador = Collections.min(resultadosSumaPorcentajesPorColumna);
+        nodoPrincipal.setNombre(ganador.getNombreColumna());
     }
-    
+
+    /**
+     * Metodo para obtener la cantidad de elementos de la columna ganadora en su
+     * columna para obtener la multiplicación del paso 2 de cada tipo y obtener
+     * su resultado: Ejemplo 5 Sunny en la columna Outlook
+     *
+     * @param elemento elemento a buscar
+     * @return
+     */
+    public int cantidadTiposActual(String elemento) {
+        int numeroDeElementosEnColumna = 0;
+        String elementoActual;
+        //Se recorrerán toas las columnas y se le resta 1 porque 1 es por el indice del arreglo.
+        for (int i = 0; i < totalColumnas - 1; i++) {
+            //Filtrar los elementos de cada columna y hacer un Distinct para contarlos
+            List<String> listDistinct = tablaPrincipal.get(i).getElemtos().stream().distinct().collect(Collectors.toList());
+            //Recorrer cada elemento diferente en la columan para buscar sus "Si" y "No"
+            for (int k = 0; k < listDistinct.size(); k++) {
+                elementoActual = listDistinct.get(k);
+                for (int j = 0; j < tablaPrincipal.get(i).getElemtos().size(); j++) {
+                    if (elementoActual.equals(elemento)) {
+                        return numeroDeElementosEnColumna = Collections.frequency(tablaPrincipal.get(i).getElemtos(), elemento);
+                    }
+                }
+            }
+        }
+        //Si no se encontro el resultado, regresa 0
+        return 0;
+    }
+
 }

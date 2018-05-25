@@ -21,11 +21,11 @@ public class Nodo {
         this.nombre = nombre;
     }
 
-    public ArrayList<Nodo> getResultados() {
+    public ArrayList<String> getResultados() {
         return resultados;
     }
 
-    public void setResultados(ArrayList<Nodo> resultados) {
+    public void setResultados(ArrayList<String> resultados) {
         this.resultados = resultados;
     }
 
@@ -37,6 +37,6 @@ public class Nodo {
         this.OpcionesNodos = OpcionesNodos;
     }
     private String nombre;
-    private ArrayList<Nodo> resultados;
+    private ArrayList<String> resultados;
     private ArrayList<Nodo> OpcionesNodos;
 }
