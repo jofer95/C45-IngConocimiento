@@ -34,7 +34,7 @@ public class NegocioC45 {
     private double entropiaGlobal;
     private int totalColumnas;
     private int totalRegistros;
-    private Nodo raiz = new Nodo();
+    public static Nodo raiz = new Nodo();
     private ArrayList<ResultadoPorColumna> listaNodosSiNoPaso2 = new ArrayList<>();
     private ArrayList<String> elementosDeLaColumnaGanadora = new ArrayList<>();
     private int totalElementosPorColumnaGanadora;
@@ -42,6 +42,10 @@ public class NegocioC45 {
     public static void main(String[] args) throws IOException, InvalidFormatException {
         NegocioC45 context = new NegocioC45();
         context.llenadoDeDatos();
+    }
+    
+    public NegocioC45() throws IOException, InvalidFormatException{        
+        llenadoDeDatos();
     }
 
     /**

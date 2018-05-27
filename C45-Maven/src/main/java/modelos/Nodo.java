@@ -6,12 +6,21 @@
 package modelos;
 
 import java.util.ArrayList;
+import no.geosoft.cc.graphics.GObject;
 
 /**
  *
  * @author jorgebarraza
  */
 public class Nodo {
+
+    public GObject getPadre() {
+        return padre;
+    }
+
+    public void setPadre(GObject padre) {
+        this.padre = padre;
+    }
 
     public Nodo() {
         resultados = new ArrayList<>();
@@ -44,4 +53,5 @@ public class Nodo {
     private String nombre;
     private ArrayList<String> resultados;
     private ArrayList<Nodo> OpcionesNodos;
+    private GObject padre;
 }
