@@ -43,6 +43,8 @@ public class NegocioC45 {
     private Nodo raiz = new Nodo();
     private Nodo nodoActual = new Nodo();
     private ArrayList<ResultadoPorColumna> listaNodosSiNoPaso2 = new ArrayList<>();
+    private ArrayList<String> elementosDeLaColumnaGanadora = new ArrayList<>();
+    private int totalElementosPorColumnaGanadora;
 
     public static void main(String[] args) throws IOException, InvalidFormatException {
         NegocioC45 context = new NegocioC45();
@@ -158,6 +160,7 @@ public class NegocioC45 {
                 if (totalSi == 0) {
                     Nodo nodoAgregar = new Nodo();
                     nodoAgregar.setNombre(elemento);
+                    elementosDeLaColumnaGanadora.add(elemento);
                     Nodo nodoHijo = new Nodo();
                     nodoHijo.setNombre("No");
                     nodoAgregar.getOpcionesNodos().add(nodoHijo);
@@ -171,6 +174,7 @@ public class NegocioC45 {
                 } else if (totalNo == 0) {
                     Nodo nodoAgregar = new Nodo();
                     nodoAgregar.setNombre(elemento);
+                    elementosDeLaColumnaGanadora.add(elemento);
                     Nodo nodoHijo = new Nodo();
                     nodoHijo.setNombre("Yes");
                     nodoAgregar.getOpcionesNodos().add(nodoHijo);
@@ -209,9 +213,11 @@ public class NegocioC45 {
         }
         SumaTiposPorColumna ganador = Collections.min(resultadosSumaPorcentajesPorColumna);
         nodoPrincipal.setNombre(ganador.getNombreColumna());
+        //elementosDeLaColumnaGanadora = obtenerElementosPorColumna(ganador.getNombreColumna());
         arbolFinal.add(nodoPrincipal);
         raiz = nodoPrincipal;
         nodoActual = nodoPrincipal;
+        totalElementosPorColumnaGanadora = obtenerElementosPorColumna(ganador.getNombreColumna()).size();
         String x = "";
         paso2();
     }
@@ -230,12 +236,16 @@ public class NegocioC45 {
         int numeroDeElementosEnColumna = 0;
         boolean esColumnaGanadora = false;
         String elementoPasoActual = "";
+        String elementoAgregarSiguiente = "";
         int indiceColumnaGanadora = 0;
         int contadorParaSalir = 0;
-        boolean columnaAgregada = false;
+        boolean elementoAgregado = false;
         //Se recorrerán toas las columnas y se le resta 1 porque 1 es por el indice del arreglo.
         //RECORRIENDO LAS COLUMNAS:
         for (int i = 0; i < totalColumnas - 1; i++) {
+            if(verificarColumnaYaAgregada(tablaPrincipal.get(i).getNombre())){
+                continue;
+            }
             indiceColumnaGanadora = obtenerIndiceColumnaGanadora(raiz.getNombre());
             //Si la columna actual es igual a la ganadora general, saltar a la siguiente columna.
             if (tablaPrincipal.get(i).getNombre().equals(raiz.getNombre())) {
@@ -249,15 +259,18 @@ public class NegocioC45 {
             //Recorrer cada elemento diferente en la columan para buscar sus "Si" y "No"
             //RECORRIENDO LA LIASTA DE CADA ELEMENTO (DISTINCT) DE LA COLUMNA i:
             for (int k = 0; k < listDistinct.size(); k++) {
+                elemento = listDistinct.get(k);
                 //RECORRIENDO TODOS LOS ELEMENTOS DE LA COLUMNA i:
-                for (int j = 0; j < tablaPrincipal.get(i).getElemtos().size(); j++) {
-                    elemento = listDistinct.get(k);
+                for (int j = 0; j < tablaPrincipal.get(i).getElemtos().size(); j++) {                    
                     //Si el elemento actual de la columna ya esta en el arbol: Saltar al siguiente.
-                    if (raiz.getResultados().contains(elemento) && esColumnaGanadora) {
-                        columnaAgregada = true;
+                    if (elementosDeLaColumnaGanadora.contains(elemento) && esColumnaGanadora) {
+                        elementoAgregado = true;
                         continue;
-                    } else if (esColumnaGanadora && elementoPasoActual.equals("")) {
+                    } else if (esColumnaGanadora /*&& elementoPasoActual.equals("")*/) {
                         elementoPasoActual = elemento;
+                        if (elementoAgregarSiguiente.equals("")) {
+                            elementoAgregarSiguiente = elemento;
+                        }
                         numeroDeElementosEnColumna = Collections.frequency(tablaPrincipal.get(i).getElemtos(), elemento);
                     }
 
@@ -265,11 +278,11 @@ public class NegocioC45 {
                     primero de la lista con el Distinct: validar sus total Si y no */
                     if (tablaPrincipal.get(i).getElemtos().get(j).equals(listDistinct.get(k))) {
                         if (tablaPrincipal.get(totalColumnas - 1).getElemtos().get(j).equals("Yes")) {
-                            if (tablaPrincipal.get(indiceColumnaGanadora).getElemtos().get(j).equals(elementoPasoActual)) {
+                            if (tablaPrincipal.get(indiceColumnaGanadora).getElemtos().get(j).equals(elementoAgregarSiguiente)) {
                                 totalSi++;
                             }
                         } else {
-                            if (tablaPrincipal.get(indiceColumnaGanadora).getElemtos().get(j).equals(elementoPasoActual)) {
+                            if (tablaPrincipal.get(indiceColumnaGanadora).getElemtos().get(j).equals(elementoAgregarSiguiente)) {
                                 totalNo++;
                             }
                         }
@@ -278,7 +291,7 @@ public class NegocioC45 {
 
                 //VALIDACION DE SALIDA DE RECURSIVIDAD:
                 //PARA SALIRSE CUANDO SE TIENEN TODOS LOR RESULTADOS POSIBLES.
-                if (contadorParaSalir == listDistinct.size()) {
+                if (contadorParaSalir == totalElementosPorColumnaGanadora) {
                     return;
                 }
 
@@ -320,6 +333,12 @@ public class NegocioC45 {
                 resultadosPorTipoEnColumna.add(porcentaje);
                 totalSi = 0;
                 totalNo = 0;
+
+                //Validacion para agregar un contador si el elemento actual ya fue agregado.
+                if (elementoAgregado) {
+                    contadorParaSalir++;
+                    elementoAgregado = false;
+                }
             }
             //Sumar todos los porcentajes de los tipos diferentes de la columna
             //RECORRIENDO TODOS LOS RESULTADOS DE CADA ELEMENTO DE LA COLUMNA i:
@@ -345,14 +364,17 @@ public class NegocioC45 {
             }
             resultadosPorTipoEnColumna = new ArrayList<>();
         }
-        SumaTiposPorColumna ganador = Collections.min(resultadosSumaPorcentajesPorColumna);
-        nodoPrincipal.setNombre(ganador.getNombreColumna());
-        nodoPrincipal.setResultados(ganador.getTiposPorColumna());
-        nodoPrincipal.setOpcionesNodos(obtenerNodosResultadoPorColumna(nodoPrincipal));
-        raiz.getOpcionesNodos().add(nodoPrincipal);
-        raiz.getResultados().add(elementoPasoActual);
-        String x = "";
-        paso2();
+        if (!elementoAgregado) {
+            SumaTiposPorColumna ganador = Collections.min(resultadosSumaPorcentajesPorColumna);
+            nodoPrincipal.setNombre(ganador.getNombreColumna());
+            nodoPrincipal.setResultados(ganador.getTiposPorColumna());
+            nodoPrincipal.setOpcionesNodos(obtenerNodosResultadoPorColumna(nodoPrincipal));
+            raiz.getOpcionesNodos().add(nodoPrincipal);
+            raiz.getResultados().add(elementoAgregarSiguiente);
+            elementosDeLaColumnaGanadora.add(elementoAgregarSiguiente);
+            String x = "";
+            paso2();
+        }
     }
 
     /**
@@ -402,6 +424,7 @@ public class NegocioC45 {
 
     /**
      * Metodo para obtener los resultados "Si" y "No" de la columna ganadora
+     *
      * @param nodoGanador nodo ganador para obtener sus hijos resultados.
      * @return Regresa una lista de los resultados
      */
@@ -417,6 +440,31 @@ public class NegocioC45 {
             }
         }
         return resultados;
+    }
+
+    /**
+     * Metodo para obtener la lista de elementos de una columna dada.
+     * @param columna nombre de la columnba en la cual buscar
+     * @return regresa la lista de los elementos de la columna
+     */
+    public List<String> obtenerElementosPorColumna(String columna) {
+        List<String> elementos = new ArrayList<>();
+        for(Columna obj : tablaPrincipal){
+            if(obj.getNombre().equals(columna)){
+                elementos = obj.getElemtos().stream().distinct().collect(Collectors.toList());
+            }
+        }
+        return elementos;
+    }
+    
+    public boolean verificarColumnaYaAgregada(String columna){
+        boolean resultado = false;
+        for(Nodo obj : raiz.getOpcionesNodos()){
+            if(obj.getNombre().equals(columna)){
+                return true;
+            }
+        }
+        return resultado;
     }
 
 }
