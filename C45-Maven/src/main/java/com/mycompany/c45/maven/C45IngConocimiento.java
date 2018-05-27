@@ -5,6 +5,7 @@
  */
 package com.mycompany.c45.maven;
 
+import static com.mycompany.c45.maven.NegocioC45.raiz;
 import java.awt.*;
 import java.io.IOException;
 import javax.swing.*;
