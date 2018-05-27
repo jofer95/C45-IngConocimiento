@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import modelos.Columna;
 import modelos.Nodo;
+import modelos.ResultadoPorColumna;
 import modelos.SumaTiposPorColumna;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.formula.functions.Column;
@@ -41,6 +42,7 @@ public class NegocioC45 {
     private ArrayList<Nodo> arbolFinal = new ArrayList<>();
     private Nodo raiz = new Nodo();
     private Nodo nodoActual = new Nodo();
+    private ArrayList<ResultadoPorColumna> listaNodosSiNoPaso2 = new ArrayList<>();
 
     public static void main(String[] args) throws IOException, InvalidFormatException {
         NegocioC45 context = new NegocioC45();
@@ -155,24 +157,30 @@ public class NegocioC45 {
                 //para agregarlos directo
                 if (totalSi == 0) {
                     Nodo nodoAgregar = new Nodo();
-                    nodoAgregar.setNombre("No");
+                    nodoAgregar.setNombre(elemento);
+                    Nodo nodoHijo = new Nodo();
+                    nodoHijo.setNombre("No");
+                    nodoAgregar.getOpcionesNodos().add(nodoHijo);
                     ArrayList<Nodo> arregloNodos = new ArrayList<>();
                     arregloNodos.add(nodoAgregar);
                     nodoPrincipal.setOpcionesNodos(arregloNodos);
                     //Agregar el resultado si sale directo
-                    ArrayList<String> arregloDeResultadosDirectos = new ArrayList<>();
-                    arregloDeResultadosDirectos.add(elemento);
-                    nodoPrincipal.setResultados(arregloDeResultadosDirectos);
+                    /*ArrayList<String> arregloDeResultadosDirectos = new ArrayList<>();
+                    arregloDeResultadosDirectos.add("Yes");
+                    nodoPrincipal.setResultados(arregloDeResultadosDirectos);*/
                 } else if (totalNo == 0) {
                     Nodo nodoAgregar = new Nodo();
-                    nodoAgregar.setNombre("Yes");
+                    nodoAgregar.setNombre(elemento);
+                    Nodo nodoHijo = new Nodo();
+                    nodoHijo.setNombre("Yes");
+                    nodoAgregar.getOpcionesNodos().add(nodoHijo);
                     ArrayList<Nodo> arregloNodos = new ArrayList<>();
                     arregloNodos.add(nodoAgregar);
                     nodoPrincipal.setOpcionesNodos(arregloNodos);
                     //Agregar el resultado si sale directo
-                    ArrayList<String> arregloDeResultadosDirectos = new ArrayList<>();
-                    arregloDeResultadosDirectos.add(elemento);
-                    nodoPrincipal.setResultados(arregloDeResultadosDirectos);
+                    /*ArrayList<String> arregloDeResultadosDirectos = new ArrayList<>();
+                    arregloDeResultadosDirectos.add("No");
+                    nodoPrincipal.setResultados(arregloDeResultadosDirectos);*/
                 }
                 totalDeUnElementoDeUnaColumna = totalSi + totalNo;
                 /*Calcular el resultado de ese registro para luego sumarlos y sacar
@@ -222,22 +230,33 @@ public class NegocioC45 {
         int numeroDeElementosEnColumna = 0;
         boolean esColumnaGanadora = false;
         String elementoPasoActual = "";
+        int indiceColumnaGanadora = 0;
+        int contadorParaSalir = 0;
+        boolean columnaAgregada = false;
         //Se recorrerán toas las columnas y se le resta 1 porque 1 es por el indice del arreglo.
+        //RECORRIENDO LAS COLUMNAS:
         for (int i = 0; i < totalColumnas - 1; i++) {
+            indiceColumnaGanadora = obtenerIndiceColumnaGanadora(raiz.getNombre());
             //Si la columna actual es igual a la ganadora general, saltar a la siguiente columna.
             if (tablaPrincipal.get(i).getNombre().equals(raiz.getNombre())) {
                 esColumnaGanadora = true;
+                indiceColumnaGanadora = i;
+            } else {
+                esColumnaGanadora = false;
             }
             //Filtrar los elementos de cada columna y hacer un Distinct para contarlos
             List<String> listDistinct = tablaPrincipal.get(i).getElemtos().stream().distinct().collect(Collectors.toList());
             //Recorrer cada elemento diferente en la columan para buscar sus "Si" y "No"
+            //RECORRIENDO LA LIASTA DE CADA ELEMENTO (DISTINCT) DE LA COLUMNA i:
             for (int k = 0; k < listDistinct.size(); k++) {
+                //RECORRIENDO TODOS LOS ELEMENTOS DE LA COLUMNA i:
                 for (int j = 0; j < tablaPrincipal.get(i).getElemtos().size(); j++) {
                     elemento = listDistinct.get(k);
                     //Si el elemento actual de la columna ya esta en el arbol: Saltar al siguiente.
                     if (raiz.getResultados().contains(elemento) && esColumnaGanadora) {
+                        columnaAgregada = true;
                         continue;
-                    } else if(esColumnaGanadora && !elementoPasoActual.equals("")) {
+                    } else if (esColumnaGanadora && elementoPasoActual.equals("")) {
                         elementoPasoActual = elemento;
                         numeroDeElementosEnColumna = Collections.frequency(tablaPrincipal.get(i).getElemtos(), elemento);
                     }
@@ -246,30 +265,47 @@ public class NegocioC45 {
                     primero de la lista con el Distinct: validar sus total Si y no */
                     if (tablaPrincipal.get(i).getElemtos().get(j).equals(listDistinct.get(k))) {
                         if (tablaPrincipal.get(totalColumnas - 1).getElemtos().get(j).equals("Yes")) {
-                            totalSi++;
+                            if (tablaPrincipal.get(indiceColumnaGanadora).getElemtos().get(j).equals(elementoPasoActual)) {
+                                totalSi++;
+                            }
                         } else {
-                            totalNo++;
+                            if (tablaPrincipal.get(indiceColumnaGanadora).getElemtos().get(j).equals(elementoPasoActual)) {
+                                totalNo++;
+                            }
                         }
                     }
                 }
+
+                //VALIDACION DE SALIDA DE RECURSIVIDAD:
+                //PARA SALIRSE CUANDO SE TIENEN TODOS LOR RESULTADOS POSIBLES.
+                if (contadorParaSalir == listDistinct.size()) {
+                    return;
+                }
+
                 //If para agregar si un tipo en la columna son puros "Si" o "No"
                 //para agregarlos directo
                 if (totalSi == 0) {
-                    Nodo nodoAgregar = new Nodo();
-                    nodoAgregar.setNombre("No");
-                    ArrayList<Nodo> arregloNodos = new ArrayList<>();
-                    arregloNodos.add(nodoAgregar);
-                    nodoPrincipal.setOpcionesNodos(arregloNodos);
+                    ResultadoPorColumna resultadoPorColumna = new ResultadoPorColumna();
+                    resultadoPorColumna.setResultado("No");
+                    resultadoPorColumna.setElemento(elemento);
+                    resultadoPorColumna.setColumna(tablaPrincipal.get(i).getNombre());
+                    listaNodosSiNoPaso2.add(resultadoPorColumna);
+                    //ArrayList<Nodo> arregloNodos = new ArrayList<>();
+                    //arregloNodos.add(nodoAgregar);
+                    //nodoPrincipal.getOpcionesNodos().add(nodoAgregar);
                     //Agregar el resultado si sale directo
                     ArrayList<String> arregloDeResultadosDirectos = new ArrayList<>();
                     arregloDeResultadosDirectos.add(elemento);
                     nodoPrincipal.setResultados(arregloDeResultadosDirectos);
                 } else if (totalNo == 0) {
-                    Nodo nodoAgregar = new Nodo();
-                    nodoAgregar.setNombre("Yes");
-                    ArrayList<Nodo> arregloNodos = new ArrayList<>();
-                    arregloNodos.add(nodoAgregar);
-                    nodoPrincipal.setOpcionesNodos(arregloNodos);
+                    ResultadoPorColumna resultadoPorColumna = new ResultadoPorColumna();
+                    resultadoPorColumna.setResultado("Yes");
+                    resultadoPorColumna.setElemento(elemento);
+                    resultadoPorColumna.setColumna(tablaPrincipal.get(i).getNombre());
+                    listaNodosSiNoPaso2.add(resultadoPorColumna);
+                    //ArrayList<Nodo> arregloNodos = new ArrayList<>();
+                    //arregloNodos.add(nodoAgregar);
+                    //nodoPrincipal.getOpcionesNodos().add(nodoAgregar);
                     //Agregar el resultado si sale directo
                     ArrayList<String> arregloDeResultadosDirectos = new ArrayList<>();
                     arregloDeResultadosDirectos.add(elemento);
@@ -286,6 +322,7 @@ public class NegocioC45 {
                 totalNo = 0;
             }
             //Sumar todos los porcentajes de los tipos diferentes de la columna
+            //RECORRIENDO TODOS LOS RESULTADOS DE CADA ELEMENTO DE LA COLUMNA i:
             for (double obj : resultadosPorTipoEnColumna) {
                 if (Double.isNaN(obj)) {
                     obj = 0;
@@ -296,16 +333,26 @@ public class NegocioC45 {
             //Si es la columna ganadora, no agregar los resultados de esa columna.
             if (!esColumnaGanadora) {
                 //AGREGAR A LA LISTA DE DE LAS COLUMNAS SUS SUMAS PARA OBTENER LA GANADORA.
-                resultadosPorTipoEnColumna = new ArrayList<>();
                 SumaTiposPorColumna totalSuma = new SumaTiposPorColumna();
                 totalSuma.setNombreColumna(tablaPrincipal.get(i).getNombre());
                 totalSuma.setTotalSumaTipos(sumaResultadosTipos);
+                //Filtrar los elementos de cada columna y hacer un Distinct para contarlos
+                //listDistinct = tablaPrincipal.get(obtenerIndiceColumnaGanadora(ganador.getNombreColumna())).getElemtos().stream().distinct().collect(Collectors.toList());
+                ArrayList<String> arrayElementosDist = new ArrayList<>(listDistinct);
+                totalSuma.setTiposPorColumna(arrayElementosDist);
                 resultadosSumaPorcentajesPorColumna.add(totalSuma);
                 sumaResultadosTipos = 0;
             }
+            resultadosPorTipoEnColumna = new ArrayList<>();
         }
         SumaTiposPorColumna ganador = Collections.min(resultadosSumaPorcentajesPorColumna);
         nodoPrincipal.setNombre(ganador.getNombreColumna());
+        nodoPrincipal.setResultados(ganador.getTiposPorColumna());
+        nodoPrincipal.setOpcionesNodos(obtenerNodosResultadoPorColumna(nodoPrincipal));
+        raiz.getOpcionesNodos().add(nodoPrincipal);
+        raiz.getResultados().add(elementoPasoActual);
+        String x = "";
+        paso2();
     }
 
     /**
@@ -335,6 +382,41 @@ public class NegocioC45 {
         }
         //Si no se encontro el resultado, regresa 0
         return 0;
+    }
+
+    /**
+     * Metodo para obtener el indice de la columna que gano para utilizar en el
+     * proceso de obtener los si y no donde coincida el elemento
+     *
+     * @param columna columna a buscar
+     * @return
+     */
+    public int obtenerIndiceColumnaGanadora(String columna) {
+        for (int i = 0; i < totalColumnas - 1; i++) {
+            if (tablaPrincipal.get(i).getNombre().equals(raiz.getNombre())) {
+                return i;
+            }
+        }
+        return 0;
+    }
+
+    /**
+     * Metodo para obtener los resultados "Si" y "No" de la columna ganadora
+     * @param nodoGanador nodo ganador para obtener sus hijos resultados.
+     * @return Regresa una lista de los resultados
+     */
+    public ArrayList<Nodo> obtenerNodosResultadoPorColumna(Nodo nodoGanador) {
+        ArrayList<Nodo> resultados = new ArrayList<>();
+        for (ResultadoPorColumna obj : listaNodosSiNoPaso2) {
+            if (obj.getColumna().equals(nodoGanador.getNombre())) {
+                if (nodoGanador.getResultados().contains(obj.getElemento())) {
+                    Nodo nodoResultado = new Nodo();
+                    nodoResultado.setNombre(obj.getResultado());
+                    resultados.add(nodoResultado);
+                }
+            }
+        }
+        return resultados;
     }
 
 }

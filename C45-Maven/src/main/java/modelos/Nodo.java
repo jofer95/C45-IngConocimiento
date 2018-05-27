@@ -13,6 +13,11 @@ import java.util.ArrayList;
  */
 public class Nodo {
 
+    public Nodo() {
+        resultados = new ArrayList<>();
+        OpcionesNodos = new ArrayList<>();
+    }
+
     public String getNombre() {
         return nombre;
     }

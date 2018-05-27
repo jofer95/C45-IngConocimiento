@@ -5,6 +5,8 @@
  */
 package modelos;
 
+import java.util.ArrayList;
+
 /**
  *
  * @author jorgebarraza
@@ -19,16 +21,24 @@ public class SumaTiposPorColumna implements Comparable<SumaTiposPorColumna> {
         this.nombreColumna = nombreColumna;
     }
 
-    public double getTotalSumaTipos() {
+    public Double getTotalSumaTipos() {
         return totalSumaTipos;
     }
 
-    public void setTotalSumaTipos(double totalSumaTipos) {
+    public void setTotalSumaTipos(Double totalSumaTipos) {
         this.totalSumaTipos = totalSumaTipos;
     }
-    
-    String nombreColumna;
-    Double totalSumaTipos;
+
+    public ArrayList<String> getTiposPorColumna() {
+        return tiposPorColumna;
+    }
+
+    public void setTiposPorColumna(ArrayList<String> tiposPorColumna) {
+        this.tiposPorColumna = tiposPorColumna;
+    }
+    private String nombreColumna;
+    private Double totalSumaTipos;
+    private ArrayList<String> tiposPorColumna;
 
     @Override
     public int compareTo(SumaTiposPorColumna o) {
