@@ -5,13 +5,10 @@
  */
 package com.mycompany.c45.maven;
 
-import static com.mycompany.c45.maven.ExcelReader.SAMPLE_XLSX_FILE_PATH;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Collectors;
 import modelos.Columna;
@@ -19,7 +16,6 @@ import modelos.Nodo;
 import modelos.ResultadoPorColumna;
 import modelos.SumaTiposPorColumna;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
-import org.apache.poi.ss.formula.functions.Column;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.DataFormatter;
 import org.apache.poi.ss.usermodel.Row;
@@ -35,13 +31,10 @@ public class NegocioC45 {
 
     public static final String SAMPLE_XLSX_FILE_PATH = "./pruebaPoi.xlsx";
     private ArrayList<Columna> tablaPrincipal;
-    private ArrayList<Columna> columnaPrincipal;
     private double entropiaGlobal;
     private int totalColumnas;
     private int totalRegistros;
-    private ArrayList<Nodo> arbolFinal = new ArrayList<>();
     private Nodo raiz = new Nodo();
-    private Nodo nodoActual = new Nodo();
     private ArrayList<ResultadoPorColumna> listaNodosSiNoPaso2 = new ArrayList<>();
     private ArrayList<String> elementosDeLaColumnaGanadora = new ArrayList<>();
     private int totalElementosPorColumnaGanadora;
@@ -62,7 +55,6 @@ public class NegocioC45 {
         try {
             Columna columna;
             tablaPrincipal = new ArrayList<>();
-            columnaPrincipal = new ArrayList<>();
 
             //Crear un Workbook desde el archivo Excel (.xls o .xlsx)
             Workbook workbook = WorkbookFactory.create(new File(SAMPLE_XLSX_FILE_PATH));
@@ -70,7 +62,7 @@ public class NegocioC45 {
             //Obteniendo la hoja numero 0
             Sheet sheet = workbook.getSheetAt(0);
 
-            // Create a DataFormatter to format and get each cell's value as String
+            // Crear el DataFormatter
             DataFormatter dataFormatter = new DataFormatter();
 
             //Obtener el numero de columnas en el excel
@@ -133,7 +125,6 @@ public class NegocioC45 {
         ArrayList<Double> resultadosPorTipoEnColumna = new ArrayList<>();
         ArrayList<SumaTiposPorColumna> resultadosSumaPorcentajesPorColumna = new ArrayList<>();
         double sumaResultadosTipos = 0;
-        String nombreColumnaGanadora;
         Nodo nodoPrincipal = new Nodo();
         String elemento = "";
         //Se recorrerán toas las columnas y se le resta 1 porque 1 es por el indice del arreglo.
@@ -167,10 +158,6 @@ public class NegocioC45 {
                     ArrayList<Nodo> arregloNodos = new ArrayList<>();
                     arregloNodos.add(nodoAgregar);
                     nodoPrincipal.setOpcionesNodos(arregloNodos);
-                    //Agregar el resultado si sale directo
-                    /*ArrayList<String> arregloDeResultadosDirectos = new ArrayList<>();
-                    arregloDeResultadosDirectos.add("Yes");
-                    nodoPrincipal.setResultados(arregloDeResultadosDirectos);*/
                 } else if (totalNo == 0) {
                     Nodo nodoAgregar = new Nodo();
                     nodoAgregar.setNombre(elemento);
@@ -181,10 +168,6 @@ public class NegocioC45 {
                     ArrayList<Nodo> arregloNodos = new ArrayList<>();
                     arregloNodos.add(nodoAgregar);
                     nodoPrincipal.setOpcionesNodos(arregloNodos);
-                    //Agregar el resultado si sale directo
-                    /*ArrayList<String> arregloDeResultadosDirectos = new ArrayList<>();
-                    arregloDeResultadosDirectos.add("No");
-                    nodoPrincipal.setResultados(arregloDeResultadosDirectos);*/
                 }
                 totalDeUnElementoDeUnaColumna = totalSi + totalNo;
                 /*Calcular el resultado de ese registro para luego sumarlos y sacar
@@ -213,10 +196,7 @@ public class NegocioC45 {
         }
         SumaTiposPorColumna ganador = Collections.min(resultadosSumaPorcentajesPorColumna);
         nodoPrincipal.setNombre(ganador.getNombreColumna());
-        //elementosDeLaColumnaGanadora = obtenerElementosPorColumna(ganador.getNombreColumna());
-        arbolFinal.add(nodoPrincipal);
         raiz = nodoPrincipal;
-        nodoActual = nodoPrincipal;
         totalElementosPorColumnaGanadora = obtenerElementosPorColumna(ganador.getNombreColumna()).size();
         String x = "";
         paso2();
@@ -303,9 +283,6 @@ public class NegocioC45 {
                     resultadoPorColumna.setElemento(elemento);
                     resultadoPorColumna.setColumna(tablaPrincipal.get(i).getNombre());
                     listaNodosSiNoPaso2.add(resultadoPorColumna);
-                    //ArrayList<Nodo> arregloNodos = new ArrayList<>();
-                    //arregloNodos.add(nodoAgregar);
-                    //nodoPrincipal.getOpcionesNodos().add(nodoAgregar);
                     //Agregar el resultado si sale directo
                     ArrayList<String> arregloDeResultadosDirectos = new ArrayList<>();
                     arregloDeResultadosDirectos.add(elemento);
@@ -316,9 +293,6 @@ public class NegocioC45 {
                     resultadoPorColumna.setElemento(elemento);
                     resultadoPorColumna.setColumna(tablaPrincipal.get(i).getNombre());
                     listaNodosSiNoPaso2.add(resultadoPorColumna);
-                    //ArrayList<Nodo> arregloNodos = new ArrayList<>();
-                    //arregloNodos.add(nodoAgregar);
-                    //nodoPrincipal.getOpcionesNodos().add(nodoAgregar);
                     //Agregar el resultado si sale directo
                     ArrayList<String> arregloDeResultadosDirectos = new ArrayList<>();
                     arregloDeResultadosDirectos.add(elemento);
@@ -457,6 +431,13 @@ public class NegocioC45 {
         return elementos;
     }
     
+    /**
+     * Metodo para validar si una columna ya fue agregada en la lista de nodos
+     * resultados, para que al sacar los resultados por columnas, no registrar
+     * una columna ya repedita
+     * @param columna
+     * @return 
+     */
     public boolean verificarColumnaYaAgregada(String columna){
         boolean resultado = false;
         for(Nodo obj : raiz.getOpcionesNodos()){
