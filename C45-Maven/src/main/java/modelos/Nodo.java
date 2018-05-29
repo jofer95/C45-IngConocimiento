@@ -14,6 +14,14 @@ import no.geosoft.cc.graphics.GObject;
  */
 public class Nodo {
 
+    public int getNivel() {
+        return nivel;
+    }
+
+    public void setNivel(int nivel) {
+        this.nivel = nivel;
+    }
+
     public GObject getPadre() {
         return padre;
     }
@@ -54,4 +62,5 @@ public class Nodo {
     private ArrayList<String> resultados;
     private ArrayList<Nodo> OpcionesNodos;
     private GObject padre;
+    private int nivel;
 }

@@ -29,8 +29,8 @@ import org.apache.poi.ss.usermodel.WorkbookFactory;
  */
 public class NegocioC45 {
 
-    //public static final String SAMPLE_XLSX_FILE_PATH = "./pruebaPoi.xlsx";
-    public static final String SAMPLE_XLSX_FILE_PATH = "./datosArbol3.xlsx";
+    public static final String SAMPLE_XLSX_FILE_PATH = "./pruebaPoi.xlsx";
+    //public static final String SAMPLE_XLSX_FILE_PATH = "./datosArbol3.xlsx";
     private ArrayList<Columna> tablaPrincipal;
     private double entropiaGlobal;
     private int totalColumnas;
@@ -40,6 +40,7 @@ public class NegocioC45 {
     private ArrayList<String> elementosDeLaColumnaGanadora = new ArrayList<>();
     private int totalElementosPorColumnaGanadora;
     private ArrayList<Nodo> listaNodosResultadosPorColumna = new ArrayList<>();
+    private int nivel = 0;
     
     public static void main(String[] args) throws IOException, InvalidFormatException {
         NegocioC45 context = new NegocioC45();
@@ -104,7 +105,7 @@ public class NegocioC45 {
             }
 
             //Llamar al siguiente paso
-            calcularEntropiaGlobar();
+            calcularEntropiaGlobal();
         } catch (Exception ex) {
             String error = "Error" + ex.getStackTrace();
         }
@@ -113,13 +114,16 @@ public class NegocioC45 {
     /**
      * Metodo que calcula la entropia globar inicial del paso 1.
      */
-    public void calcularEntropiaGlobar() {
+    public void calcularEntropiaGlobal() {
         //Obtener el total de los "Si" y los "No"
         ArrayList<String> columnaDeCualesJuegan = tablaPrincipal.get(totalColumnas - 1).getElemtos();
         int totalSi = Collections.frequency(columnaDeCualesJuegan, "Yes");
         int totalNo = Collections.frequency(columnaDeCualesJuegan, "No");
         //Calcular la entropia globar:
         entropiaGlobal = -((double) totalSi / totalRegistros) * Math.log((double) totalSi / totalRegistros) / Math.log(2) - ((double) totalNo / totalRegistros) * Math.log((double) totalNo / totalRegistros) / Math.log(2);
+        System.out.println("Entropia global: " +entropiaGlobal);
+        System.out.println("");
+        System.out.println("");
         String x = "";
         paso1();
     }
@@ -208,11 +212,16 @@ public class NegocioC45 {
             sumaResultadosTipos = 0;
             listaNodosResultadosPorColumna.add(nodoColumnaActualResultados);
         }
+        
+        //SACAR AL GANDOR DE TODAS LAS COLUMNAS:
         SumaTiposPorColumna ganador = Collections.min(resultadosSumaPorcentajesPorColumna);
+        System.out.println("Resultado suma ganador paso 1: "+ganador.getTotalSumaTipos());
         nodoPrincipal.setNombre(ganador.getNombreColumna());
         nodoPrincipal.setResultados(obtenerListaResultadorPorNodoGanador(ganador.getNombreColumna()));
         elementosDeLaColumnaGanadora = nodoPrincipal.getResultados();
         nodoPrincipal.setOpcionesNodos(obtenerListaNodosOpcionesPorNodoGanador(ganador.getNombreColumna()));
+        nodoPrincipal.setNivel(nivel);
+        nivel++;
         raiz = nodoPrincipal;
         totalElementosPorColumnaGanadora = obtenerElementosPorColumna(ganador.getNombreColumna()).size();
         String x = "";
@@ -361,25 +370,27 @@ public class NegocioC45 {
             nodoPrincipal.setNombre(ganador.getNombreColumna());
             nodoPrincipal.setResultados(ganador.getTiposPorColumna());
             nodoPrincipal.setOpcionesNodos(obtenerNodosResultadoPorColumna(nodoPrincipal));
+            nodoPrincipal.setNivel(nivel);
             raiz.getOpcionesNodos().add(nodoPrincipal);
             raiz.getResultados().add(elementoAgregarSiguiente);
             elementosDeLaColumnaGanadora = raiz.getResultados();
             contadorParaSalir++;
+            nivel++;
             String x = "";
             paso2();
         }
     }
 
     public void imprimirResultado(Nodo resultado) {
-        System.out.println("Nodo ==> " + resultado.getNombre());
+        System.out.println("Nodo: " + resultado.getNombre());
         if (resultado.getResultados().size() > 0) {
-            System.out.println("=========Resultados=========");
+            System.out.println("Resultados=====>");
             for (String x : resultado.getResultados()) {
-                System.out.println(x);
+                System.out.println("Resultado: "+x);
             }
         }
         if (resultado.getOpcionesNodos().size() > 0) {
-            System.out.println("=========Hijos=========");
+            System.out.println("Hijos======>");          
             for (Nodo obj : resultado.getOpcionesNodos()) {
                 imprimirResultado(obj);
                 //System.out.println(obj.getNombre());
@@ -439,12 +450,14 @@ public class NegocioC45 {
      * @return Regresa una lista de los resultados
      */
     public ArrayList<Nodo> obtenerNodosResultadoPorColumna(Nodo nodoGanador) {
+        nivel++;
         ArrayList<Nodo> resultados = new ArrayList<>();
         for (ResultadoPorColumna obj : listaNodosSiNoPaso2) {
             if (obj.getColumna().equals(nodoGanador.getNombre())) {
                 if (nodoGanador.getResultados().contains(obj.getElemento())) {
                     Nodo nodoResultado = new Nodo();
                     nodoResultado.setNombre(obj.getResultado());
+                    nodoResultado.setNivel(nivel);
                     resultados.add(nodoResultado);
                 }
             }
