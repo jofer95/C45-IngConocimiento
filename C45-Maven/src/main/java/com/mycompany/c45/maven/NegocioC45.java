@@ -47,6 +47,7 @@ public class NegocioC45 {
     }
 
     public NegocioC45() throws IOException, InvalidFormatException {
+        //tablaPrincipal = llenadoDeDatos();
         llenadoDeDatos();
         imprimirResultado(raiz);
     }
